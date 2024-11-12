@@ -1,8 +1,10 @@
+
 namespace TuberTreats.Models;
-public class Customer
+public class CustomerDTO
 {
     public int Id { get; set; }
     public string Name { get; set; }
     public string Address { get; set; }
-    public List<TuberOrder>? TuberOrders { get; set; } = new List<TuberOrder>();
+
+    public List<TuberOrderDTO>? TuberOrders { get; set; } // Optional list of TuberOrderDTOs
 }
