@@ -98,21 +98,6 @@ return Results.Ok(tuberOrderDTO);
 
 });
 
-
-// public class TuberOrderCreateDTO{
-//     public int CustomerId { get; set; }
-//     public int? TuberDriverId { get; set; }
-//     public DateTime? DeliveredOnDate { get; set; }
-//     public List<int> ToppingIds { get; set; } = new List<int>(); // List of topping IDs for the order }
-
-// public class TuberOrder {
-//     public int Id { get; set; }
-//     public DateTime OrderPlacedOnDate { get; set; }
-//     public int CustomerId { get; set; }
-//     public int? TuberDriverId { get; set; }
-//     public DateTime? DeliveredOnDate { get; set; }
-//     public List<Topping> Toppings { get; set; } = new List<Topping>(); }
-
 app.MapPost("api/tuberorders", (TuberOrderCreateDTO newTuberOrder, IMapper mapper) => {
 
 List<Topping> tuberOrderToppingList = newTuberOrder.ToppingIds
@@ -246,7 +231,7 @@ app.MapGet("/tubertoppings", (IMapper mapper) =>
 
 
 
-app.MapPost("/tubertoppings/add/", ([FromBody] TuberToppingDTO tuberToppingDTO, IMapper mapper) => 
+app.MapPost("/tubertoppings/add/", ([FromBody] CreateTuberToppingDTO tuberToppingDTO, IMapper mapper) => 
 {
 
 TuberOrder neededTuberOrder = orders.FirstOrDefault(eachOrder => eachOrder.Id == tuberToppingDTO.TuberOrderId);
@@ -266,7 +251,7 @@ tuberToppings.Add(newTuberTopping);
 
 TuberToppingDTO returnedTuberTopping = mapper.Map<TuberToppingDTO>(newTuberTopping);
 
-return Results.Created("tubertoppings/add", returnedTuberTopping);
+return Results.Created("tubertoppings/add", newTuberTopping);
 
 });
 
@@ -288,6 +273,24 @@ app.MapDelete("/tubertoppings/remove", ([FromBody] TuberToppingDTO tuberToppingD
     // Return a status indicating successful deletion
     return Results.NoContent();
 });
+
+app.MapDelete("/tubertoppings/remove/{id}", (int id) =>
+{
+    // Find the TuberTopping based on Id
+    TuberTopping toppingToRemove = tuberToppings.FirstOrDefault(tt => tt.Id == id);
+
+    if (toppingToRemove == null)
+    {
+        return Results.NotFound($"Topping with ID {id} not found.");
+    }
+
+    // Remove the topping from the list
+    tuberToppings.Remove(toppingToRemove);
+
+    // Return a status indicating successful deletion
+    return Results.NoContent();
+});
+
 
 
 app.MapGet("/customers", (IMapper mapper) => {
@@ -387,7 +390,7 @@ return Results.Created("/customers", customerDTO);
 
 });
 
-app.MapDelete("/customers/{id}", (int id, [FromBody] CustomerDTO customerDTO, IMapper mapper) =>
+app.MapDelete("/customers/withBody/{id}", (int id, [FromBody] CustomerDTO customerDTO, IMapper mapper) =>
 {
 
 
@@ -419,6 +422,30 @@ foreach (var order in tuberOrdersForCustomer)
 
 
 });
+
+app.MapDelete("/customers/{id}", (int id) =>
+{
+    // Find the customer by ID
+    Customer ourCustomer = customers.SingleOrDefault(c => c.Id == id);
+    if (ourCustomer == null)
+    {
+        return Results.NotFound("Customer not found.");
+    }
+
+    // Find all orders associated with this customer and remove the customer reference
+    List<TuberOrder> tuberOrdersForCustomer = orders.Where(order => order.CustomerId == id).ToList();
+    foreach (var order in tuberOrdersForCustomer)
+    {
+        order.CustomerId = 0; // Remove the reference to the customer
+    }
+
+    // Remove the customer from the customer list
+    customers.Remove(ourCustomer);
+
+    // Return a status indicating successful deletion
+    return Results.NoContent();
+});
+
 
 
 //non DTO version 
